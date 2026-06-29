@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>山水地图故事测试页</title>
+  <style>
+    html,
+    body {
+      height: 100%;
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f7f7f2;
+      color: #1f2933;
+      overflow: hidden;
+    }
+
+    .scene {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      background:
+        linear-gradient(to bottom, #f6f7f2 0%, #edf0e8 55%, #dfe6dc 100%);
+    }
+
+    .title {
+      position: absolute;
+      z-index: 10;
+      top: 32px;
+      left: 36px;
+      max-width: 420px;
+    }
+
+    h1 {
+      margin: 0 0 10px;
+      font-size: 32px;
+      font-weight: 500;
+      letter-spacing: 0;
+    }
+
+    p {
+      margin: 0 0 18px;
+      line-height: 1.7;
+      color: #4b5563;
+    }
+
+    button {
+      border: 1px solid #1f2933;
+      background: rgba(255, 255, 255, 0.78);
+      padding: 9px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 15px;
+    }
+
+    .mountain {
+      position: absolute;
+      left: 50%;
+      bottom: 0;
+      width: 130vw;
+      height: 50vh;
+      transform: translateX(-50%);
+      transition: transform 4s ease-in-out;
+      clip-path: polygon(
+        0% 100%,
+        8% 68%,
+        16% 80%,
+        26% 45%,
+        36% 74%,
+        47% 38%,
+        58% 78%,
+        70% 46%,
+        82% 73%,
+        92% 52%,
+        100% 100%
+      );
+    }
+
+    .far {
+      bottom: 18vh;
+      height: 34vh;
+      background: rgba(108, 124, 111, 0.18);
+    }
+
+    .mid {
+      bottom: 8vh;
+      height: 42vh;
+      background: rgba(74, 92, 80, 0.32);
+    }
+
+    .near {
+      bottom: -3vh;
+      height: 52vh;
+      background: rgba(36, 51, 43, 0.55);
+    }
+
+    .boat {
+      position: absolute;
+      left: 44%;
+      bottom: 14vh;
+      width: 120px;
+      height: 14px;
+      border-radius: 50%;
+      background: rgba(32, 42, 36, 0.68);
+      transition: transform 4s ease-in-out;
+    }
+
+    .scene.playing .far {
+      transform: translateX(-53%);
+    }
+
+    .scene.playing .mid {
+      transform: translateX(-62%);
+    }
+
+    .scene.playing .near {
+      transform: translateX(-78%);
+    }
+
+    .scene.playing .boat {
+      transform: translateX(160px);
+    }
+  </style>
+</head>
+<body>
+  <main class="scene" id="scene">
+    <section class="title">
+      <h1>山水地图故事测试页</h1>
+      <p>这是一个极简 HTML 页面，用来测试能否发布到 GitHub Pages，并嵌入 GeoScene Online 地图故事。</p>
+      <button id="playButton" type="button">开始移动</button>
+    </section>
+
+    <div class="mountain far"></div>
+    <div class="mountain mid"></div>
+    <div class="mountain near"></div>
+    <div class="boat"></div>
+  </main>
+
+  <script>
+    const scene = document.getElementById("scene");
+    const playButton = document.getElementById("playButton");
+
+    playButton.addEventListener("click", () => {
+      scene.classList.toggle("playing");
+      playButton.textContent = scene.classList.contains("playing") ? "回到开始" : "开始移动";
+    });
+  </script>
+</body>
+</html>
