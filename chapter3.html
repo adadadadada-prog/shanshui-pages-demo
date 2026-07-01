@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>第三章：雾中村庄</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #8f7d5c, #d9cab0 48%, #a08a62);
+      font-family: "Songti SC", "STSong", "SimSun", serif;
+      color: #211f18;
+    }
+    .screen {
+      min-height: 100vh;
+      display: none;
+      place-items: center;
+      padding: 18px;
+    }
+    .screen.active { display: grid; }
+    .failure-card {
+      width: min(580px, 100%);
+      padding: 34px 30px;
+      background: rgba(228, 214, 178, .88);
+      border: 1px solid rgba(35, 31, 25, .18);
+      box-shadow: 0 18px 48px rgba(40, 28, 15, .22);
+      text-align: center;
+      line-height: 1.9;
+    }
+    .failure-card h1 { margin: 0 0 12px; letter-spacing: .12em; }
+    .failure-card p { color: rgba(33, 31, 24, .76); }
+    .failure-card a, .info button {
+      display: inline-block;
+      margin-top: 12px;
+      padding: 10px 18px;
+      border: 1px solid rgba(35, 31, 25, .28);
+      background: #2b2a22;
+      color: #f4e8c9;
+      text-decoration: none;
+      font-family: inherit;
+      cursor: pointer;
+    }
+    .village-wrap {
+      width: min(980px, 100%);
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 330px;
+      gap: 16px;
+      padding: 18px;
+    }
+    .map {
+      position: relative;
+      min-height: calc(100vh - 36px);
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 50% 45%, rgba(235, 225, 198, .76), transparent 38%),
+        linear-gradient(#b7a47b, #d7c8a7 48%, #aa9168);
+      border: 1px solid rgba(35, 31, 25, .2);
+      box-shadow: inset 0 0 70px rgba(42, 31, 18, .2);
+    }
+    .map::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      opacity: .18;
+      background-image:
+        linear-gradient(90deg, rgba(35, 28, 18, .08) 1px, transparent 1px),
+        linear-gradient(rgba(35, 28, 18, .05) 1px, transparent 1px);
+      background-size: 31px 31px;
+      pointer-events: none;
+      mix-blend-mode: multiply;
+    }
+    svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+    .fog {
+      position: absolute;
+      inset: 0;
+      z-index: 18;
+      pointer-events: none;
+      background:
+        radial-gradient(circle at 22% 24%, transparent 0 14%, rgba(238,231,211,.78) 24%, transparent 35%),
+        radial-gradient(circle at 68% 34%, rgba(238,231,211,.92) 0 18%, transparent 33%),
+        radial-gradient(circle at 38% 70%, rgba(238,231,211,.86) 0 23%, transparent 39%),
+        linear-gradient(90deg, rgba(238,231,211,.75), transparent 22%, transparent 70%, rgba(238,231,211,.8));
+      filter: blur(10px);
+      opacity: .96;
+      transition: opacity .7s ease;
+    }
+    .fog.level1 { opacity: .72; }
+    .fog.level2 { opacity: .48; }
+    .fog.level3 { opacity: .2; }
+    .person {
+      position: absolute;
+      z-index: 25;
+      transform: translate(-50%, -50%);
+      border: 1px solid rgba(70, 18, 14, .35);
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 34% 28%, #f2dfb7 0 10%, #9f382f 38%, #5f1d17 100%);
+      color: #f7ead1;
+      display: grid;
+      place-items: center;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 4px 18px rgba(32, 20, 13, .32);
+    }
+    .person.locked {
+      filter: grayscale(.8);
+      opacity: .45;
+      cursor: not-allowed;
+    }
+    .person.done { background: radial-gradient(circle at 34% 28%, #f4e5be 0 10%, #6d5a36 38%, #302619 100%); }
+    .tag {
+      position: absolute;
+      z-index: 24;
+      transform: translate(-50%, 20px);
+      padding: 2px 7px;
+      background: rgba(220, 204, 163, .76);
+      border: 1px solid rgba(35, 31, 25, .12);
+      color: rgba(28, 27, 21, .78);
+      font-size: 13px;
+      white-space: nowrap;
+      pointer-events: none;
+    }
+    .side {
+      min-height: calc(100vh - 36px);
+      padding: 18px;
+      background: rgba(228, 214, 178, .86);
+      border: 1px solid rgba(35, 31, 25, .18);
+      box-shadow: inset 0 0 36px rgba(42, 31, 18, .12);
+    }
+    .side h1 { margin: 0 0 10px; letter-spacing: .12em; }
+    .side p { margin: 0 0 14px; line-height: 1.8; color: rgba(33, 31, 24, .74); }
+    .log {
+      display: grid;
+      gap: 9px;
+      margin-top: 14px;
+    }
+    .entry {
+      padding: 9px 10px;
+      border-left: 3px solid rgba(33, 31, 24, .42);
+      background: rgba(248, 241, 219, .38);
+      line-height: 1.65;
+      font-size: 14px;
+    }
+    .info {
+      position: fixed;
+      left: 50%;
+      bottom: 18px;
+      z-index: 50;
+      width: min(520px, calc(100% - 34px));
+      transform: translateX(-50%);
+      display: none;
+      padding: 14px 16px;
+      background: rgba(229, 216, 183, .94);
+      border: 1px solid rgba(35, 31, 25, .18);
+      box-shadow: 0 12px 32px rgba(36, 25, 14, .24);
+      text-align: center;
+      line-height: 1.8;
+    }
+    .info.show { display: block; }
+    .info strong { font-size: 18px; }
+    @media (max-width: 820px) {
+      .village-wrap { grid-template-columns: 1fr; }
+      .map { min-height: 720px; }
+      .side { min-height: auto; }
+    }
+  </style>
+</head>
+<body>
+  <section class="screen" id="failureScreen">
+    <div class="failure-card">
+      <h1>暮色入山</h1>
+      <p>你沿着所选的路走了很久。溪声渐远，山影却越来越低，像一张慢慢合拢的旧纸。等你意识到方向不对时，干粮已经少了一份，信封也被夜露浸得微凉。</p>
+      <p>远处似乎有灯火，但那不是信中所说的村庄。你只好在风里停下，带着一种说不清的怅然，重新回望来路。</p>
+      <a href="./chapter2.html">返回第二章</a>
+    </div>
+  </section>
+
+  <section class="screen" id="villageScreen">
+    <div class="village-wrap">
+      <div class="map">
+        <svg viewBox="0 0 700 900" preserveAspectRatio="none" aria-hidden="true">
+          <path d="M70 810 C180 710 130 610 250 555 C370 500 315 370 430 300 C530 238 535 130 660 72" fill="none" stroke="rgba(62,86,82,.54)" stroke-width="34" stroke-linecap="round"/>
+          <path d="M70 810 C180 710 130 610 250 555 C370 500 315 370 430 300 C530 238 535 130 660 72" fill="none" stroke="rgba(235,230,206,.42)" stroke-width="9" stroke-linecap="round"/>
+          <path d="M120 760 L245 646 L355 620 L470 498 L590 392" fill="none" stroke="rgba(76,56,35,.5)" stroke-width="4" stroke-linecap="round" stroke-dasharray="9 10"/>
+          <path d="M210 300 C286 250 368 250 438 300 C388 334 280 340 210 300Z" fill="rgba(61,70,51,.24)"/>
+          <path d="M80 500 C146 450 210 470 255 530 C194 560 124 550 80 500Z" fill="rgba(61,70,51,.22)"/>
+          <g fill="rgba(78,55,34,.42)">
+            <rect x="385" y="400" width="38" height="28" transform="rotate(-16 404 414)"/>
+            <rect x="438" y="430" width="42" height="30" transform="rotate(10 459 445)"/>
+            <rect x="300" y="510" width="36" height="28" transform="rotate(-8 318 524)"/>
+            <rect x="245" y="605" width="42" height="30" transform="rotate(12 266 620)"/>
+            <rect x="520" y="320" width="46" height="32" transform="rotate(-10 543 336)"/>
+          </g>
+          <g stroke="rgba(32,36,29,.34)" stroke-width="2" fill="none">
+            <path d="M250 630 q28 -14 56 0 q28 14 56 0"/>
+            <path d="M265 653 q28 -14 56 0 q28 14 56 0"/>
+            <path d="M420 475 q30 -14 60 0 q30 14 60 0"/>
+          </g>
+        </svg>
+        <div class="fog" id="fog"></div>
+
+        <button class="person" data-id="elder" style="left: 23%; top: 77%;">一</button>
+        <div class="tag" style="left: 23%; top: 77%;">村口老者</div>
+        <button class="person locked" data-id="child" style="left: 43%; top: 67%;">二</button>
+        <div class="tag" style="left: 43%; top: 67%;">学童</div>
+        <button class="person locked" data-id="vendor" style="left: 66%; top: 51%;">三</button>
+        <div class="tag" style="left: 66%; top: 51%;">药铺伙计</div>
+        <button class="person locked" data-id="well" style="left: 75%; top: 37%;">四</button>
+        <div class="tag" style="left: 75%; top: 37%;">西井妇人</div>
+        <button class="person locked" data-id="doctor" style="left: 53%; top: 43%;">五</button>
+        <div class="tag" style="left: 53%; top: 43%;">西边医舍</div>
+      </div>
+
+      <aside class="side">
+        <h1>第三章</h1>
+        <p>你抵达河湾台地。村庄像沉在雾里，屋脊、井口与人影互相遮掩。要找到收信人林知远，必须先问清这里究竟有几个同名之人。</p>
+        <p>点击人物获取线索。若顺序正确，雾会逐渐散开。</p>
+        <div class="log" id="log"></div>
+      </aside>
+    </div>
+  </section>
+
+  <div class="info" id="info">
+    <strong id="infoTitle"></strong>
+    <div id="infoText"></div>
+    <button id="closeInfo">记下</button>
+  </div>
+
+  <script>
+    const choice = localStorage.getItem("chapter2Choice");
+    const isCorrectRoute = choice === "c";
+    document.getElementById(isCorrectRoute ? "villageScreen" : "failureScreen").classList.add("active");
+
+    const order = ["elder", "child", "vendor", "well", "doctor"];
+    const clues = {
+      elder: ["村口老者", "村里确有两个林知远。一个才十来岁，在东边学塾；另一个年过五十，常被人叫林大夫。"],
+      child: ["学童", "你要找的不是我。我也叫林知远，但信上若写的是故人，多半是西边那位林大夫。"],
+      vendor: ["药铺伙计", "林大夫前些日子还来取过药。后来村西起了雾，医舍便一直关着门。"],
+      well: ["西井妇人", "林大夫住在井后的医舍。只是他几日前病倒了，村里人都不大愿意提。"],
+      doctor: ["西边医舍", "门内无人应答。邻人低声说，林知远已在几日前病逝。你捏着信封，忽然觉得喉间发紧。"]
+    };
+    let step = 0;
+    const fog = document.getElementById("fog");
+    const log = document.getElementById("log");
+    const info = document.getElementById("info");
+    const infoTitle = document.getElementById("infoTitle");
+    const infoText = document.getElementById("infoText");
+    const people = [...document.querySelectorAll(".person")];
+
+    function unlockNext() {
+      people.forEach(person => {
+        const index = order.indexOf(person.dataset.id);
+        person.classList.toggle("locked", index > step);
+      });
+      fog.className = "fog level" + Math.min(step, 3);
+    }
+
+    function addLog(title, text) {
+      const div = document.createElement("div");
+      div.className = "entry";
+      div.textContent = title + "：" + text;
+      log.appendChild(div);
+    }
+
+    people.forEach(person => {
+      person.addEventListener("click", () => {
+        const id = person.dataset.id;
+        const index = order.indexOf(id);
+        if (index > step) {
+          infoTitle.textContent = "雾尚未散";
+          infoText.textContent = "你还缺少前一条线索，此处的人影隔着雾，看不分明。";
+          info.classList.add("show");
+          return;
+        }
+        const [title, text] = clues[id];
+        infoTitle.textContent = title;
+        infoText.textContent = text;
+        info.classList.add("show");
+        if (!person.classList.contains("done")) {
+          person.classList.add("done");
+          addLog(title, text);
+          if (index === step && step < order.length - 1) step += 1;
+          unlockNext();
+        }
+      });
+    });
+
+    document.getElementById("closeInfo").addEventListener("click", () => {
+      info.classList.remove("show");
+    });
+
+    unlockNext();
+  </script>
+</body>
+</html>
